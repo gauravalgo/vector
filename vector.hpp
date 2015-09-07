@@ -41,44 +41,44 @@ public:
         typedef T* pointer;
         typedef std::random_access_iterator_tag iterator_category;
         typedef ptrdiff_t difference_type;
-        iterator(size_type idx, vector<T> & data) :
-            m_index(idx),
+        iterator(pointer ptr, vector<T> & data) :
+            m_ptr(ptr),
             m_data(data) {}
 
         iterator(const self_type & other) :
-            m_data(other.m_data),
-            m_index(other.m_index) {}
+            m_ptr(other.m_ptr),
+            m_data(other.m_data) {}
 
         self_type & operator++() {
-            m_index++;
+            m_ptr++;
             return *this;
         }
 
         self_type operator++(int foo) {
             (void)foo;
             self_type tmp(*this);
-            m_index++;
+            m_ptr++;
             return tmp;
         }
 
         self_type & operator--() {
-            m_index--;
+            m_ptr--;
             return *this;
         }
 
         self_type operator--(int foo) {
             (void)foo;
             self_type tmp(*this);
-            m_index--;
+            m_ptr--;
             return tmp;
         }
 
         reference operator*() {
-            return m_data[m_index];
+            return *m_ptr;
         }
 
         bool operator==(const self_type & rhs) const {
-            return m_index == rhs.m_index;
+            return m_ptr == rhs.m_ptr;
         }
 
         bool operator!=(const self_type & rhs) const {
@@ -86,14 +86,14 @@ public:
         }
 
         self_type operator+=(const difference_type & n) {
-
+            
         }
         self_type operator+(const difference_type & n) {
 
         }
 
     private:
-        size_type      m_index;
+        pointer      m_ptr;
         vector<T> & m_data;
     };
 
