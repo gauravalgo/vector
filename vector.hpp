@@ -5,15 +5,15 @@
 #include <stdexcept>
 
 template<typename T>
-class Vector {
+class vector {
 public:
-    Vector(){}
-    explicit Vector(size_t n = DEFAULT_MAX_NUMBER);
-    explicit Vector( const Vector<T> & other);
-    ~Vector();
+    vector(){}
+    explicit vector(size_t n = DEFAULT_MAX_NUMBER);
+    explicit vector( const vector<T> & other);
+    ~vector();
 
-    void pushBack(const T& val);
-    void popBack();
+    void push_back(const T& val);
+    void pop_back();
     void insert(size_t pos, const T & val);
     void erase(size_t pos);
     T & at(size_t n);
@@ -23,7 +23,7 @@ public:
     size_t capacity() const;
     void resize(size_t n);
     T& operator[](size_t pos);
-//    T& operator=(Vector<T> & other);
+//    T& operator=(vector<T> & other);
     T& front();
     T& back();
 
@@ -38,13 +38,13 @@ private:
 };
 
 template<typename T>
-Vector<T>::Vector(size_t n) :
+vector<T>::vector(size_t n) :
     m_maxNumber(n) {
     m_array = new T[n];
 }
 
 template<typename T>
-Vector<T>::Vector(const Vector<T> & other) {
+vector<T>::vector(const vector<T> & other) {
     m_maxNumber = other.capacity();
     m_currentNumber = other.size();
     m_array = new T[m_maxNumber];
@@ -54,18 +54,18 @@ Vector<T>::Vector(const Vector<T> & other) {
 }
 
 template<typename T>
-Vector<T>::~Vector() {
+vector<T>::~vector() {
     delete [] m_array;
 }
 
 template<typename T>
-void Vector<T>::pushBack(const T& val) {
+void vector<T>::push_back(const T& val) {
     m_array[m_currentNumber++] = val;
     tryResize();
 }
 
 template<typename T>
-void Vector<T>::popBack() {
+void vector<T>::pop_back() {
     if(!m_currentNumber) {
         throw std::out_of_range("Position is out of range!");
     }
@@ -75,7 +75,7 @@ void Vector<T>::popBack() {
 }
 
 template<typename T>
-void Vector<T>::insert(size_t pos, const T & val) {
+void vector<T>::insert(size_t pos, const T & val) {
     if(pos > m_currentNumber){
         throw std::out_of_range("Position is out of range!");
     }
@@ -89,7 +89,7 @@ void Vector<T>::insert(size_t pos, const T & val) {
 }
 
 template<typename T>
-void Vector<T>::erase(size_t pos) {
+void vector<T>::erase(size_t pos) {
     if(pos > m_currentNumber){
         throw std::out_of_range("Position is out of range!");
     }
@@ -103,7 +103,7 @@ void Vector<T>::erase(size_t pos) {
 }
 
 template<typename T>
-T & Vector<T>::at(size_t n) {
+T & vector<T>::at(size_t n) {
     if(n > m_currentNumber - 1){
         throw std::out_of_range("Position is out of range!");
     }
@@ -111,12 +111,12 @@ T & Vector<T>::at(size_t n) {
 }
 
 template<typename T>
-T * const  Vector<T>::data() const {
+T * const  vector<T>::data() const {
     return m_array;
 }
 
 template<typename T>
-void Vector<T>::clear() {
+void vector<T>::clear() {
     delete [] m_array;
     m_currentNumber = 0;
     m_maxNumber = DEFAULT_MAX_NUMBER;
@@ -124,7 +124,7 @@ void Vector<T>::clear() {
 }
 
 template<typename T>
-void Vector<T>::tryResize() {
+void vector<T>::tryResize() {
     if(m_currentNumber >= m_maxNumber) {
         m_maxNumber *= 2;
         resize(m_maxNumber);
@@ -137,17 +137,17 @@ void Vector<T>::tryResize() {
 }
 
 template<typename T>
-size_t Vector<T>::size() const {
+size_t vector<T>::size() const {
     return m_currentNumber;
 }
 
 template<typename T>
-size_t Vector<T>::capacity() const {
+size_t vector<T>::capacity() const {
     return m_maxNumber;
 }
 
 template<typename T>
-void Vector<T>::resize(size_t n) {
+void vector<T>::resize(size_t n) {
     T * tmp = new T[n];
     for(size_t i = 0; i < std::min(m_currentNumber, n); ++i) {
         tmp[i] = m_array[i];
@@ -157,12 +157,12 @@ void Vector<T>::resize(size_t n) {
 }
 
 template<typename T>
-T& Vector<T>::operator[](size_t pos) {
+T& vector<T>::operator[](size_t pos) {
     return m_array[pos];
 }
 
 //template<typename T>
-//T& Vector<T>::operator=(Vector<T> & other) {
+//T& vector<T>::operator=(vector<T> & other) {
 //    if(other != *this) {
 //        m_maxNumber = other.capacity();
 //        m_currentNumber = other.size();
@@ -178,11 +178,11 @@ T& Vector<T>::operator[](size_t pos) {
 //}
 
 template<typename T>
-T& Vector<T>::front() {
+T& vector<T>::front() {
     return m_array[0];
 }
 template<typename T>
-T& Vector<T>::back() {
+T& vector<T>::back() {
     return m_array[m_currentNumber - 1];
 }
 #endif
