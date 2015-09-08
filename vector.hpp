@@ -1,16 +1,16 @@
 //     Yet another attempt to implement STL-style vector
 //     Copyright (C) 2015  Anton V. Krishtof
-// 
+//
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
 //     the Free Software Foundation, either version 3 of the License, or
 //     (at your option) any later version.
-// 
+//
 //     This program is distributed in the hope that it will be useful,
 //     but WITHOUT ANY WARRANTY; without even the implied warranty of
 //     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //     GNU General Public License for more details.
-// 
+//
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -77,6 +77,19 @@ public:
             return m_ptr == rhs.m_ptr;
         }
 
+        bool operator<(const self_type & rhs) const {
+            return m_ptr < rhs.m_ptr;
+        }
+        bool operator<=(const self_type & rhs) const {
+            return m_ptr <= rhs.m_ptr;
+        }
+        bool operator>(const self_type & rhs) const {
+            return m_ptr > rhs.m_ptr;
+        }
+        bool operator>=(const self_type & rhs) const {
+            return m_ptr >= rhs.m_ptr;
+        }
+
         bool operator!=(const self_type & rhs) const {
             return !this->operator==(rhs);
         }
@@ -97,6 +110,12 @@ public:
             return tmp;
         }
 
+        self_type operator-(const difference_type & n) {
+            self_type tmp(*this);
+            tmp.operator-=(n);
+            return tmp;
+        }
+
         difference_type operator-(const self_type & rhs) {
             return m_ptr - rhs.m_ptr;
         }
@@ -113,14 +132,14 @@ public:
     private:
         pointer      m_ptr;
     };
-    
+
     class const_iterator
     {
     public:
         typedef const_iterator self_type;
-        typedef T value_type;
-        typedef T& reference;
-        typedef T* pointer;
+        typedef const T value_type;
+        typedef const T& reference;
+        typedef const T* pointer;
         typedef std::random_access_iterator_tag iterator_category;
         typedef ptrdiff_t difference_type;
         const_iterator(pointer ptr) :
@@ -160,6 +179,18 @@ public:
         bool operator==(const self_type & rhs) const {
             return m_ptr == rhs.m_ptr;
         }
+        bool operator<(const self_type & rhs) const {
+            return m_ptr < rhs.m_ptr;
+        }
+        bool operator<=(const self_type & rhs) const {
+            return m_ptr <= rhs.m_ptr;
+        }
+        bool operator>(const self_type & rhs) const {
+            return m_ptr > rhs.m_ptr;
+        }
+        bool operator>=(const self_type & rhs) const {
+            return m_ptr >= rhs.m_ptr;
+        }
 
         bool operator!=(const self_type & rhs) const {
             return !this->operator==(rhs);
@@ -181,6 +212,12 @@ public:
             return tmp;
         }
 
+        self_type operator-(const difference_type & n) {
+            self_type tmp(*this);
+            tmp.operator-=(n);
+            return tmp;
+        }
+
         difference_type operator-(const self_type & rhs) {
             return m_ptr - rhs.m_ptr;
         }
@@ -191,18 +228,22 @@ public:
         }
 
         friend self_type operator+(difference_type lhs, const self_type & rhs) {
-            return self_type(lhs+rhs._ptr);
+            return self_type(lhs+rhs.m_ptr);
+        }
+        operator iterator()  {
+//             typename vector<T>::iterator::pointer p = m_ptr;
+            return iterator(const_cast<typename iterator::pointer>(m_ptr) );
         }
 
     private:
-        const pointer m_ptr;
+        pointer m_ptr;
     };
-    
+
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 public:
-    
+
     vector(){}
     explicit vector(size_type n);
     explicit vector( const vector<T> & other);
@@ -221,6 +262,7 @@ public:
     void clear();
     size_type size() const;
     size_type capacity() const;
+    bool empty() const noexcept;
     void resize(size_type n);
     void reserve(size_type n);
     T& operator[](size_type pos);
@@ -234,23 +276,28 @@ public:
     T& back();
     const T& back() const;
 
+    size_type max_size() const;
+
     iterator begin();
     iterator end();
-    
+
     const_iterator cbegin();
     const_iterator cend();
-    
+
     reverse_iterator rbegin();
     reverse_iterator rend();
-    
+
     const_reverse_iterator crbegin();
     const_reverse_iterator crend();
 
-    
+    template <class... Args>
+    iterator emplace (const_iterator position, Args&&... args);
+    template <class... Args>
+    void emplace_back (Args&&... args);
 
 private:
     T * allocate(size_type n);
-    
+
 private:
     T * m_array {nullptr};
     size_type m_max_number{0};
@@ -284,10 +331,13 @@ vector<T>::vector( vector<T> && other) {
 
 template<typename T>
 vector<T>::~vector() {
-    for(int i = 0; i< m_current_number; ++ i) {
-        m_array[i].~T();
+    if(m_array) {
+        for(size_type i = 0; i< m_current_number; ++ i) {
+            m_array[i].~T();
+        }
+        free(m_array);
+        m_array = nullptr;
     }
-    free(m_array);
 }
 
 template<typename T>
@@ -380,7 +430,7 @@ void vector<T>::try_reserve() {
         m_max_number = 1;
         m_array = allocate(m_max_number);
     }
-    
+
     if(m_current_number >= m_max_number) {
         m_max_number *= 2;
         reserve(m_max_number);
@@ -396,6 +446,10 @@ template<typename T>
 typename vector<T>::size_type vector<T>::capacity() const {
     return m_max_number;
 }
+template<typename T>
+bool vector<T>::empty() const noexcept {
+    return size() == 0;
+}
 
 template<typename T>
 void vector<T>::resize(size_type n) {
@@ -403,7 +457,7 @@ void vector<T>::resize(size_type n) {
         return;
     } else if(n < size()) {
         for(size_type i = n; i < size(); ++i) {
-           m_array[i].~T(); 
+           m_array[i].~T();
         }
         m_current_number = n;
     } else {
@@ -422,6 +476,10 @@ T * vector<T>::allocate(size_type n) {
 
 template<typename T>
 void vector<T>::reserve(size_type n) {
+    if (n > max_size()) {
+        throw std::length_error("max_size() exceeded!");
+    }
+
     if (n > m_max_number) {
         T * tmp  = allocate(n);
         if (m_array) {
@@ -447,25 +505,27 @@ const T& vector<T>::operator[](size_type pos) const {
 template<typename T>
 vector<T> & vector<T>::operator=(const vector< T >& other) {
     if(other != *this) {
-        bool isRealloc = false;
+        bool need_realloc = false;
         size_type old_size(size());
         if(m_max_number < other.size()) {
-            isRealloc = true;
+            need_realloc = true;
             m_max_number = other.size();
         }
-        T * destination = (isRealloc) ? allocate(m_max_number) : m_array;
+        T * destination = (need_realloc || !m_array) ? allocate(m_max_number) : m_array;
         m_current_number = other.size();
 
        //TODO Discuss element-wise copy
        for(int i = 0; i< m_current_number; ++ i) {
            (void) new (destination + i) T(other[i]);
        }
-       
-       if(isRealloc) {
-           for(int i = 0; i < old_size; ++ i) {
-               m_array[i].~T();
+
+       if(need_realloc) {
+           if(m_array) {
+               for(int i = 0; i < old_size; ++ i) {
+                   m_array[i].~T();
+               }
+               free(m_array);
            }
-           free(m_array);
            m_array = destination;
        }
    }
@@ -519,6 +579,11 @@ const T & vector<T>::back() const {
 }
 
 template<typename T>
+typename vector<T>::size_type vector<T>::max_size() const {
+    return std::numeric_limits<size_type>::max() - 1;
+}
+
+template<typename T>
 typename vector<T>::iterator vector<T>::begin()
 {
     return iterator(m_array);
@@ -558,6 +623,27 @@ typename vector<T>::const_reverse_iterator vector<T>::crbegin() {
 template<typename T>
 typename vector<T>::const_reverse_iterator vector<T>::crend() {
     return const_reverse_iterator(begin());
+}
+
+template<typename T>
+template <class... Args>
+typename vector<T>::iterator vector<T>::emplace (
+    const_iterator position,
+    Args&&... args) {
+    auto pos = position - cbegin();
+    try_reserve();
+    for(auto i = m_current_number; i > pos; --i) {
+        (void)new (m_array + i) T(std::forward<T>(m_array[i-1]));
+    }
+    m_current_number++;
+    std::printf("pos is %ld size %lu cap %lu\n",pos,size(),capacity());
+    return iterator(reinterpret_cast<T*>(new (const_cast<T*>(m_array + pos)) T(args ...)));
+}
+
+template<typename T>
+template <class... Args>
+void vector<T>::emplace_back (Args&&... args) {
+    emplace(cend(),args...);
 }
 
 

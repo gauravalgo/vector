@@ -52,7 +52,7 @@ struct Foo {
     }
 private:
     int m_i;
-    
+
 };
 }
 
@@ -117,7 +117,7 @@ int main(int argc, const char * argv[]) {
             std::cout << *i << " ";
         }
         std::cout << std::endl;
-        
+
         auto iter = v1.begin();
         for(int i = 0; i< v1.size();++i) {
             std::cout << iter[i] << " ";
@@ -136,12 +136,26 @@ int main(int argc, const char * argv[]) {
         }
         std::cout << std::endl;
 
+        std::cout << "\n\n\n v4 <- v3" << std::endl;
         vector<std::Foo> v4(v3);
-        vector<std::Foo> v5(std::forward<vector<std::Foo>>( v3));
+        std::cout << "\n\n\n v5 <- v3" << std::endl;
+        vector<std::Foo> v5( std::forward<vector<std::Foo>>(v3));
+
+//         v3.~vector();
+
         for(int i = 0; i< v4.size();++i) {
             std::cout << v4[i] << " ";
         }
         std::cout << std::endl;
+
+        std::cout << "\n\n\n emplace" << std::endl;
+
+        v5.emplace(v5.cbegin(),42);
+        v5.emplace(v5.cbegin(),43);
+        v5.emplace(v5.cbegin(),44);
+        v5.emplace(v5.cbegin(),45);
+        v5.emplace_back(46);
+        v5.emplace_back(47);
         for(int i = 0; i< v5.size();++i) {
             std::cout << v5[i] << " ";
         }
