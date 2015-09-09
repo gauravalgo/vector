@@ -17,7 +17,6 @@
 #include <iostream>
 
 #include "vector.hpp"
-// #include <vector>
 
 namespace std{
 
@@ -91,11 +90,6 @@ int main(int argc, const char * argv[]) {
         std::cout << std::endl;
 
 
-//        v.clear();
-//
-//        std::cout << v.size() << std::endl;
-//        v.popBack();
-//        std::cout << v.size() << std::endl;
         vector<int> v1(v);
         for(int i = 0; i< v1.size();++i) {
             std::cout << v1[i] << " ";
@@ -139,10 +133,10 @@ int main(int argc, const char * argv[]) {
         vector<std::Foo> v4(v3);
         std::cout << "\n\n\n v4 <- v3" << std::endl;
         std::cout << "Vector 4 size " << v4.size() << " and capacity " << v4.capacity() << std::endl;
-        vector<std::Foo> v5(v3);
+//         vector<std::Foo> v5(v3);
+        vector<std::Foo> v5( std::forward<vector<std::Foo>>(v3));
         std::cout << "\n\n\n v5 <- v3" << std::endl;
         std::cout << "Vector 5 size " << v5.size() << " and capacity " << v5.capacity() << std::endl;
-//         vector<std::Foo> v5( std::forward<vector<std::Foo>>(v3));
 
 //         v3.~vector();
 
@@ -162,26 +156,74 @@ int main(int argc, const char * argv[]) {
         v5.emplace_back(46);
         v5.emplace_back(47);
         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
-//         v5.emplace_back(47);
+        
         for(int i = 0; i< v5.size();++i) {
             std::cout << v5[i] << " ";
         }
         std::cout << std::endl;
 
+        v4.swap(v5);
+        
+        for(int i = 0; i< v4.size();++i) {
+            std::cout << v4[i] << " ";
+        }
+        std::cout << std::endl;
 
+        vector<std::Foo> v6({1,4,8,8});
+        
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        
+        vector<std::Foo> v7(v6);
+        v6.insert(v6.cbegin()+2,v7.begin(),v7.end()) ;
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        
+        v6.insert(v6.cbegin()+2,{9,9,9,9}) ;
+        
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        v6.insert(v6.cbegin()+5,std::Foo(88)) ;
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        v6.erase(v6.cbegin()+1);
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        v6.erase(v6.cbegin()+4, v6.cbegin()+6);
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        v6.erase(v6.cbegin()+4, v6.cend());
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        v6.erase(v6.cend()-1);
+        for(int i = 0; i< v6.size();++i) {
+            std::cout << v6[i] << " ";
+        }
+        std::cout << std::endl;
+        
+        std::cout << "Vector 6 size " << v6.size() << " and capacity " << v6.capacity() << std::endl;
+        v6.shrink_to_fit();
+        std::cout << "Vector 6 size " << v6.size() << " and capacity " << v6.capacity() << std::endl;
+        
+        
+        
     } catch (std::out_of_range e){
+        std::cout << e.what() << std::endl;
+    } catch (std::length_error e){
         std::cout << e.what() << std::endl;
     }
 
