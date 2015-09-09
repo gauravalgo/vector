@@ -431,10 +431,13 @@ void vector<T>::try_reserve() {
         m_array = allocate(m_max_number);
     }
 
+    std::printf("===cur %lu max %lu\n",m_current_number, m_max_number);
     if(m_current_number >= m_max_number) {
         m_max_number *= 2;
         reserve(m_max_number);
+    std::printf("===m_array -> %p\n",m_array);
     }
+    std::printf("m_array -> %p\n",m_array);
 }
 
 template<typename T>
@@ -464,6 +467,10 @@ void vector<T>::resize(size_type n) {
         if(n > m_max_number) {
             reserve(n);
             m_max_number = n;
+        } else {
+            for(size_type i = size(); i <  n; ++i) {
+                (void) new (m_array+i) T();
+            }
         }
         m_current_number = n;
     }
@@ -482,6 +489,7 @@ void vector<T>::reserve(size_type n) {
 
     if (n > m_max_number) {
         T * tmp  = allocate(n);
+        std::printf("tmp -> %p\n",tmp);
         if (m_array) {
             for(size_type i = 0; i < std::min(m_current_number, n); ++i) {
                 (void) new (tmp+i) T(m_array[i]);
@@ -633,11 +641,12 @@ typename vector<T>::iterator vector<T>::emplace (
     auto pos = position - cbegin();
     try_reserve();
     for(auto i = m_current_number; i > pos; --i) {
-        (void)new (m_array + i) T(std::forward<T>(m_array[i-1]));
+//         (void)new (m_array + i) T(std::forward<T>(m_array[i-1]));
+        (void)new (m_array + i) T(m_array[i-1]);
     }
     m_current_number++;
     std::printf("pos is %ld size %lu cap %lu\n",pos,size(),capacity());
-    return iterator(reinterpret_cast<T*>(new (const_cast<T*>(m_array + pos)) T(args ...)));
+    return iterator(new (m_array + pos) T(args ...));
 }
 
 template<typename T>

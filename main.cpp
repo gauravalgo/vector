@@ -136,10 +136,13 @@ int main(int argc, const char * argv[]) {
         }
         std::cout << std::endl;
 
-        std::cout << "\n\n\n v4 <- v3" << std::endl;
         vector<std::Foo> v4(v3);
+        std::cout << "\n\n\n v4 <- v3" << std::endl;
+        std::cout << "Vector 4 size " << v4.size() << " and capacity " << v4.capacity() << std::endl;
+        vector<std::Foo> v5(v3);
         std::cout << "\n\n\n v5 <- v3" << std::endl;
-        vector<std::Foo> v5( std::forward<vector<std::Foo>>(v3));
+        std::cout << "Vector 5 size " << v5.size() << " and capacity " << v5.capacity() << std::endl;
+//         vector<std::Foo> v5( std::forward<vector<std::Foo>>(v3));
 
 //         v3.~vector();
 
@@ -154,8 +157,24 @@ int main(int argc, const char * argv[]) {
         v5.emplace(v5.cbegin(),43);
         v5.emplace(v5.cbegin(),44);
         v5.emplace(v5.cbegin(),45);
+        v5.emplace(v5.cbegin(),46);
+        v5.emplace(v5.cbegin(),47);
         v5.emplace_back(46);
         v5.emplace_back(47);
+        v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
+//         v5.emplace_back(47);
         for(int i = 0; i< v5.size();++i) {
             std::cout << v5[i] << " ";
         }
