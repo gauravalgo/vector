@@ -24,8 +24,6 @@
 #include <cstddef>
 #include <limits>
 #include <initializer_list>
-        
-
 
 template<typename T>
 class vector {
@@ -107,13 +105,13 @@ public:
             return *this;
         }
 
-        self_type operator+(const difference_type & n) {
+        self_type operator+(const difference_type & n) const {
             self_type tmp(*this);
             tmp.operator+=(n);
             return tmp;
         }
 
-        self_type operator-(const difference_type & n) {
+        self_type operator-(const difference_type & n) const {
             self_type tmp(*this);
             tmp.operator-=(n);
             return tmp;
@@ -124,14 +122,16 @@ public:
         }
 
         reference operator[](difference_type n) {
-            self_type tmp  = *this;
-            return *(tmp.operator+=(n));
+            return *(m_ptr + n);
         }
 
         friend self_type operator+(difference_type lhs, const self_type & rhs) {
-            return self_type(lhs+rhs._ptr);
+            return self_type(lhs+rhs.m_ptr);
         }
 
+        operator pointer() {
+            return m_ptr;
+        }
     private:
         pointer      m_ptr;
     };
@@ -209,19 +209,19 @@ public:
             return *this;
         }
 
-        self_type operator+(const difference_type & n) {
+        self_type operator+(const difference_type & n) const {
             self_type tmp(*this);
             tmp.operator+=(n);
             return tmp;
         }
 
-        self_type operator-(const difference_type & n) {
+        self_type operator-(const difference_type & n) const {
             self_type tmp(*this);
             tmp.operator-=(n);
             return tmp;
         }
 
-        difference_type operator-(const self_type & rhs) {
+        difference_type operator-(const self_type & rhs) const{
             return m_ptr - rhs.m_ptr;
         }
 
@@ -230,11 +230,14 @@ public:
             return *(tmp.operator+=(n));
         }
 
-        friend self_type operator+(difference_type lhs, const self_type & rhs) {
+        friend self_type operator+(difference_type lhs, const self_type & rhs){
             return self_type(lhs+rhs.m_ptr);
         }
         operator iterator()  {
             return iterator(const_cast<typename iterator::pointer>(m_ptr) );
+        }
+        operator pointer() {
+            return m_ptr;
         }
 
     private:
@@ -250,6 +253,9 @@ public:
     explicit vector(size_type n);
     explicit vector( const vector<value_type> & other);
     explicit vector( vector<value_type> && other);
+    template <class InputIterator>
+    vector (InputIterator first, InputIterator last);
+
     vector (std::initializer_list<value_type> il);
     ~vector();
 
@@ -319,8 +325,11 @@ private:
 
 template<typename value_type>
 vector<value_type>::vector(size_type n) :
-    m_max_number(n) {
+    m_max_number(n),m_current_number(m_max_number) {
     m_array = allocate(m_max_number);
+    for(int i = 0; i< m_current_number; ++ i) {
+        (void) new (m_array + i) value_type();
+    }
 }
 
 template<typename value_type>
@@ -340,8 +349,14 @@ vector<value_type>::vector( vector<value_type> && other) {
      std::swap(m_max_number,other.m_max_number);
 }
 template<typename value_type>
+template <class InputIterator>
+vector<value_type>::vector (InputIterator first, InputIterator last) {
+    insert(cbegin(),first,last);
+}
+
+template<typename value_type>
 vector<value_type>::vector (std::initializer_list<value_type> il) {
-    insert(cbegin(),il.begin(),il.end());
+    insert(cbegin(),il);
 }
 
 template<typename value_type>
@@ -375,7 +390,8 @@ void vector<value_type>::pop_back() {
 }
 
 template<typename value_type>
-typename vector<value_type>::iterator vector<value_type>::insert (const_iterator position, const value_type& val) {
+typename vector<value_type>::iterator vector<value_type>::insert (
+    const_iterator position, const value_type& val) {
     if(position > cend() || position < cbegin()){
         throw std::out_of_range("Position is out of range!");
     }
@@ -417,8 +433,9 @@ typename vector<value_type>::iterator vector<value_type>::insert (
     }
 
     if(m_current_number + distance > m_max_number) {
-        reserve(m_current_number + distance);
-        m_max_number = m_current_number + distance;
+        auto reserve_up_to = std::max(m_current_number + distance, 2 * m_current_number);
+        reserve(reserve_up_to);
+        m_max_number = reserve_up_to;
     }
 
     for(size_type i = 0; i < m_current_number - from; ++i) {
@@ -426,7 +443,7 @@ typename vector<value_type>::iterator vector<value_type>::insert (
         auto src = m_current_number - i - 1;
         (void) new (m_array + dest) value_type(std::forward<value_type>(m_array[src]));
     }
-    
+
     for(size_type i = 0; i < distance; ++i) {
         (void) new (m_array + from + i) value_type(*(il.begin() + i));
     }
@@ -437,7 +454,8 @@ typename vector<value_type>::iterator vector<value_type>::insert (
 
 template<typename value_type>
 template <class InputIterator>
-typename vector<value_type>::iterator vector<value_type>::insert (const_iterator position, InputIterator first, InputIterator last) {
+typename vector<value_type>::iterator vector<value_type>::insert (
+    const_iterator position, InputIterator first, InputIterator last) {
     int distance = last - first;
     auto from = position - cbegin();
 
@@ -446,8 +464,9 @@ typename vector<value_type>::iterator vector<value_type>::insert (const_iterator
     }
 
     if(m_current_number + distance > m_max_number) {
-        reserve(m_current_number + distance);
-        m_max_number += distance;
+        auto reserve_up_to = std::max(m_current_number + distance, 2 * m_current_number);
+        reserve(reserve_up_to);
+        m_max_number = reserve_up_to;
     }
 
     for(size_type i = 0; i < m_current_number - from; ++i) {
@@ -457,7 +476,6 @@ typename vector<value_type>::iterator vector<value_type>::insert (const_iterator
     }
 
     for(size_type i = 0; i < distance; ++i) {
-        std::printf("first[i] -> %d\n",(int)first[i]);
         (void) new (m_array + from + i) value_type(first[i]);
     }
 
@@ -477,7 +495,7 @@ typename vector<value_type>::iterator vector<value_type>::erase (const_iterator 
     if(first > cend() || first < cbegin() || (distance < 0)){
         throw std::out_of_range("Position is out of range!");
     }
-    
+
     auto to = std::min(m_current_number, (size_type)(last - cbegin()));
     auto true_distance = to - from;
 
@@ -745,12 +763,12 @@ typename vector<value_type>::reverse_iterator vector<value_type>::rend() {
 
 template<typename value_type>
 typename vector<value_type>::const_reverse_iterator vector<value_type>::crbegin() {
-    return const_reverse_iterator(end());
+    return const_reverse_iterator(cend());
 }
 
 template<typename value_type>
 typename vector<value_type>::const_reverse_iterator vector<value_type>::crend() {
-    return const_reverse_iterator(begin());
+    return const_reverse_iterator(cbegin());
 }
 
 template<typename value_type>

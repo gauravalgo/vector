@@ -5,16 +5,16 @@ SOURCES=main.cpp vector.hpp
 TEST_SOURCES=tests/tests.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
-EXECUTABLE=vector
+EXECUTABLE=vector-main
 TEST_EXECUTABLE=tests/tests
 
 
-all: $(EXECUTABLE) tests
+all: $(EXECUTABLE) $(TEST_EXECUTABLE)
 
-rebuild: clean $(EXECUTABLE)
+rebuild: clean all
 
 tests_run: $(TEST_EXECUTABLE)
-	bash $(TEST_EXECUTABLE)
+	$(TEST_EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(OBJECTS) -o $@
