@@ -457,7 +457,7 @@ void init() {
     tests.push_back({"test_erase_single",                      test_erase_single});
     tests.push_back({"test_erase_range",                       test_erase_range});
     tests.push_back({"test_emplace",                           test_emplace});
-    tests.push_back({"test_emplace_back",                           test_emplace_back});
+    tests.push_back({"test_emplace_back",                      test_emplace_back});
     tests.push_back({"test_iterator_read",                     test_iterator_read});
     tests.push_back({"test_c_iterator_read",                   test_c_iterator_read});
     tests.push_back({"test_r_iterator_read",                   test_r_iterator_read});
