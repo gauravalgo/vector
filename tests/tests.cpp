@@ -478,7 +478,7 @@ int main(int argc, const char * argv[]) {
                   << item.name
                   << "]"
                   << std::setw(30)<< std::setfill('.') << std::right
-                  << "START"
+                  << "[START]"
                   << std::endl;
 
         auto result = item.action();
@@ -488,7 +488,7 @@ int main(int argc, const char * argv[]) {
                   << item.name
                   << "]"
                   << std::setw(30)<< std::setfill('.') << std::right
-                  << (result ? "PASS" : "FAIL")
+                  << (result ? "[ PASS]" : "[ FAIL]")
                   << std::endl;
     }
 }
