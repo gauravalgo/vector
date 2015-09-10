@@ -1,5 +1,5 @@
 CXX=g++
-CPPFLAGS=-std=c++11 -I. -Itests -Iinclude
+CXXFLAGS=-std=c++11 -I. -Itests -Iinclude
 LDFLAGS=
 TEST_SOURCES=tests/tests.cpp
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
@@ -15,7 +15,7 @@ tests_run: $(TEST_EXECUTABLE)
 	$(TEST_EXECUTABLE)
 
 $(TEST_EXECUTABLE): $(TEST_OBJECTS)
-	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(TEST_OBJECTS) -o $@
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(TEST_OBJECTS) -o $@
 
 .c.o:
 	$(CXX) $(CPPFLAGS) -c $< -o $@
