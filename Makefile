@@ -18,6 +18,6 @@ $(TEST_EXECUTABLE): $(TEST_OBJECTS)
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(TEST_OBJECTS) -o $@
 
 .c.o:
-	$(CXX) $(CPPFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 clean:
 	rm -fr tests/*.o $(TEST_EXECUTABLE) $(TEST_OBJECTS)
