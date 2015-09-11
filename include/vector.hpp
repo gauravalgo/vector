@@ -499,14 +499,15 @@ typename vector<value_type>::iterator vector<value_type>::erase (const_iterator 
     auto to = std::min(m_current_number, (size_type)(last - cbegin()));
     auto true_distance = to - from;
 
-    for(size_type i = 0; i < true_distance; ++i) {
-        m_array[i].~value_type();
-    }
 
     for(size_type i = to; i < m_current_number; ++i) {
         (void) new (m_array + i - true_distance) value_type(std::forward<value_type>(m_array[i]));
     }
 
+    for(size_type i = m_current_number - true_distance; i < m_current_number; ++i) {
+        m_array[i].~value_type();
+    }
+    
     m_current_number -= true_distance;
 
     return begin() + from;
