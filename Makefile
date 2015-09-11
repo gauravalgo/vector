@@ -17,7 +17,7 @@ tests_run: $(TEST_EXECUTABLE)
 $(TEST_EXECUTABLE): $(TEST_OBJECTS)
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(TEST_OBJECTS) -o $@
 
-.c.o:
+.cpp.o:
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 clean:
 	rm -fr tests/*.o $(TEST_EXECUTABLE) $(TEST_OBJECTS)
