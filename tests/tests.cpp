@@ -34,25 +34,29 @@ namespace test{
 namespace{
 using namespace std;
 struct Foo {
-    Foo() {}
-    Foo(int i) : m_i(i) {}
-    Foo(const Foo &  f) : m_i(f.m_i){}
-    Foo(Foo&&  f) : m_i(f.m_i){}
+    static int balance;
+    static void init() {balance = 0;}
+    Foo() {balance++;}
+    Foo(int i) : m_i(i) {balance++;}
+    Foo(const Foo &  f) : m_i(f.m_i) {balance++;}
+    Foo(Foo&&  f) {std::swap(m_i, f.m_i); balance++;}
     Foo & operator=(const Foo &  f) {
         m_i = f.m_i;
         return *this;
     }
     Foo & operator=(Foo &&  f) {
-        m_i = std::move(f.m_i);
+        std::swap(m_i, f.m_i);
         return *this;
     }
     operator int() const{
         return m_i;
     }
-    ~Foo() {}
+    ~Foo() {balance--;}
 private:
     int m_i;
 };
+
+int Foo::balance = 0;
 
 }
 bool test_default_constructor() {
@@ -147,7 +151,7 @@ bool test_copy_constructor() {
 
 bool test_move_constructor() {
     vector<Foo> v1({1, 2, 3, 4, 5});
-    vector<Foo> v2(std::forward<vector<Foo>>(v1));
+    vector<Foo> v2(std::move(v1));
     START()
     EXPECT(v1.empty())
     EXPECT(!v2.empty())
@@ -192,7 +196,8 @@ bool test_pop_back() {
 
 bool test_insert_by_copy() {
     vector<Foo> v1({1, 2, 3, 4, 5});
-    v1.insert(v1.cbegin() + 2,Foo(42));
+    Foo item = Foo(42);
+    v1.insert(v1.cbegin() + 2, item);
     START()
     EXPECT(v1.size()      == 6)
     EXPECT(v1.capacity()  == 10)
@@ -207,7 +212,7 @@ bool test_insert_by_copy() {
 
 bool test_insert_by_move() {
     vector<Foo> v1({1, 2, 3, 4, 5});
-    v1.insert(v1.cbegin() + 2,std::forward<Foo>(Foo(42)));
+    v1.insert(v1.cbegin() + 2,Foo(42));
     START()
     EXPECT(v1.size()      == 6)
     EXPECT(v1.capacity()  == 10)
@@ -433,6 +438,88 @@ bool test_r_iterator_write() {
     STOP()
 }
 
+bool test_constructors_destructors_match() {
+    Foo::init();
+
+    {
+        vector<Foo> v;
+        for(int i = 0; i < 1000;++i) {
+            auto item = Foo(i);
+            v.insert(v.cbegin(),item);
+        }
+        for(int i = 0; i < 1000;++i) {
+            v.pop_back();
+        }
+    }
+
+    START()
+    EXPECT(Foo::balance == 0)
+    STOP()
+}
+
+bool test_shrink_resize_reserve() {
+    vector<Foo> v;
+
+    v.reserve(10);
+    v.insert(v.cbegin(), {1,2,3,4,5});
+
+    START()
+    EXPECT(v.capacity() == 10)
+    EXPECT(v.size()     == 5)
+
+    v.shrink_to_fit();
+
+    EXPECT(v.capacity() == 5)
+    EXPECT(v.size()     == 5)
+
+    v.resize(3);
+
+    EXPECT(v.capacity() == 5)
+    EXPECT(v.size()     == 3)
+    STOP()
+}
+
+bool test_doubling() {
+    vector<Foo> v;
+
+    v.reserve(5);
+    v.insert(v.cbegin(), {1,2,3,4,5,6,7});
+
+    START()
+    EXPECT(v.capacity() == 10)
+    EXPECT(v.size()     == 7)
+    STOP()
+}
+
+bool test_swap() {
+    vector<Foo> v1({1, 2, 3, 4, 5});
+    vector<Foo> v2({6, 7, 8 ,9});
+    auto old_v1_size = v1.size();
+    auto old_v1_capacity = v1.capacity();
+    auto old_v2_size = v2.size();
+    auto old_v2_capacity = v2.capacity();
+
+    v1.swap(v2);
+
+    START()
+    EXPECT(v1.size()      == old_v2_size)
+    EXPECT(v1.capacity()  == old_v2_capacity)
+    EXPECT(v2.size()      == old_v1_size)
+    EXPECT(v2.capacity()  == old_v1_capacity)
+
+    EXPECT(v1[0]          == 6)
+    EXPECT(v1[1]          == 7)
+    EXPECT(v1[2]          == 8)
+    EXPECT(v1[3]          == 9)
+
+    EXPECT(v2[0]          == 1)
+    EXPECT(v2[1]          == 2)
+    EXPECT(v2[2]          == 3)
+    EXPECT(v2[3]          == 4)
+    EXPECT(v2[4]          == 5)
+    STOP()
+}
+
 struct test_type {
     std::string name;
     std::function<bool()> action;
@@ -464,9 +551,11 @@ void init() {
     tests.push_back({"test_cr_iterator_read",                  test_cr_iterator_read});
     tests.push_back({"test_iterator_write",                    test_iterator_write});
     tests.push_back({"test_r_iterator_write",                  test_r_iterator_write});
+    tests.push_back({"test_constructors_destructors_match",    test_constructors_destructors_match});
+    tests.push_back({"test_shrink_resize_reserve",             test_shrink_resize_reserve});
+    tests.push_back({"test_doubling",                          test_doubling});
+    tests.push_back({"test_swap",                              test_swap});
 }
-
-
 }
 
 int main(int argc, const char * argv[]) {
