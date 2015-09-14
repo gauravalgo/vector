@@ -476,7 +476,6 @@ typename vector<value_type>::iterator vector<value_type>::insert (
     }
 
     for(size_type i = 0; i < distance; ++i) {
-        m_array[from+i].~value_type();
         (void) new (m_array + from + i) value_type(first[i]);
     }
 
@@ -788,7 +787,6 @@ typename vector<value_type>::iterator vector<value_type>::emplace (
         std::swap(m_array[i],m_array[i-1]);
     }
     m_current_number++;
-//     m_array[pos].~value_type();
     return iterator(new (m_array + pos) value_type(args ...));
 }
 

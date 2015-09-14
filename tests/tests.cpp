@@ -28,9 +28,8 @@
                 {
 #define EXPECT(condition) if (!(condition)) { std::cout << "[Error] " #condition " -> false" << std::endl; ret = FAIL;}
 #define STOP() }\
-               std::cout << "Balance" << Foo::balance << std::endl;\
                return ret;
-               
+
 
 namespace test{
 
@@ -41,15 +40,15 @@ struct Foo {
     Foo() {balance++;}
     Foo(int i) : m_i(i) {balance++;}
     Foo(const Foo &  f) : m_i(f.m_i) {balance++;}
-//     Foo(Foo&&  f) {std::swap(m_i, f.m_i); balance++;}
+    Foo(Foo&&  f) {std::swap(m_i, f.m_i); balance++;}
     Foo & operator=(const Foo &  f) {
         m_i = f.m_i;
         return *this;
     }
-//     Foo & operator=(Foo &&  f) {
-//         std::swap(m_i, f.m_i);
-//         return *this;
-//     }
+    Foo & operator=(Foo &&  f) {
+        std::swap(m_i, f.m_i);
+        return *this;
+    }
     operator int() const{
         return m_i;
     }
@@ -440,20 +439,6 @@ bool test_r_iterator_write() {
     STOP()
 }
 
-bool test_constructors_destructors_match() {
-    START()
-//         vector<Foo> v;
-//         for(int i = 0; i < 1000;++i) {
-//             auto item = Foo(i);
-//             v.insert(v.cbegin(),item);
-//         }
-//         for(int i = 0; i < 1000;++i) {
-//             v.pop_back();
-//         }
-    EXPECT(Foo::balance == 0)
-    STOP()
-}
-
 bool test_shrink_resize_reserve() {
     START()
     vector<Foo> v;
@@ -514,6 +499,12 @@ bool test_swap() {
     EXPECT(v2[2]          == 3)
     EXPECT(v2[3]          == 4)
     EXPECT(v2[4]          == 5)
+    STOP()
+}
+
+bool test_constructors_destructors_match() {
+    START()
+    EXPECT(Foo::balance == 0)
     STOP()
 }
 
