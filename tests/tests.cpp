@@ -23,11 +23,14 @@
 
 #define PASS true
 #define FAIL false
-#define START() {\
-                bool ret(PASS);
+
+#define START() bool ret(PASS);\
+                {
 #define EXPECT(condition) if (!(condition)) { std::cout << "[Error] " #condition " -> false" << std::endl; ret = FAIL;}
-#define STOP() return ret;\
-               }
+#define STOP() }\
+               std::cout << "Balance" << Foo::balance << std::endl;\
+               return ret;
+               
 
 namespace test{
 
@@ -35,19 +38,18 @@ namespace{
 using namespace std;
 struct Foo {
     static int balance;
-    static void init() {balance = 0;}
     Foo() {balance++;}
     Foo(int i) : m_i(i) {balance++;}
     Foo(const Foo &  f) : m_i(f.m_i) {balance++;}
-    Foo(Foo&&  f) {std::swap(m_i, f.m_i); balance++;}
+//     Foo(Foo&&  f) {std::swap(m_i, f.m_i); balance++;}
     Foo & operator=(const Foo &  f) {
         m_i = f.m_i;
         return *this;
     }
-    Foo & operator=(Foo &&  f) {
-        std::swap(m_i, f.m_i);
-        return *this;
-    }
+//     Foo & operator=(Foo &&  f) {
+//         std::swap(m_i, f.m_i);
+//         return *this;
+//     }
     operator int() const{
         return m_i;
     }
@@ -60,8 +62,8 @@ int Foo::balance = 0;
 
 }
 bool test_default_constructor() {
-    vector<Foo> v;
     START()
+    vector<Foo> v;
     EXPECT(v.empty())
     EXPECT(v.size() == 0)
     EXPECT(v.capacity() == 0)
@@ -73,8 +75,8 @@ bool test_default_constructor() {
 }
 
 bool test_fill_constructor_size_0() {
-    vector<Foo> v(0);
     START()
+    vector<Foo> v(0);
     EXPECT(v.empty())
     EXPECT(v.size() == 0)
     EXPECT(v.capacity() == 0)
@@ -86,8 +88,8 @@ bool test_fill_constructor_size_0() {
 }
 
 bool test_fill_constructor_size_5() {
-    vector<Foo> v(5);
     START()
+    vector<Foo> v(5);
     EXPECT(!v.empty())
     EXPECT(v.size() == 5)
     EXPECT(v.capacity() == 5)
@@ -99,8 +101,8 @@ bool test_fill_constructor_size_5() {
 }
 
 bool test_constructor_with_initializer_list() {
-    vector<Foo> v({1, 2, 3, 4, 5});
     START()
+    vector<Foo> v({1, 2, 3, 4, 5});
     EXPECT(!v.empty())
     EXPECT(v.size() == 5)
     EXPECT(v.capacity() == 5)
@@ -117,9 +119,9 @@ bool test_constructor_with_initializer_list() {
 }
 
 bool test_constructor_with_range() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     vector<Foo> v2(v1.begin(),v1.begin() + 3);
-    START()
     EXPECT(!v2.empty())
     EXPECT(v2.size() == 3)
     EXPECT(v2.capacity() == 3)
@@ -134,9 +136,9 @@ bool test_constructor_with_range() {
 }
 
 bool test_copy_constructor() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     vector<Foo> v2(v1);
-    START()
     EXPECT(!v1.empty())
     EXPECT(!v2.empty())
     EXPECT(v1.size()      == v2.size())
@@ -150,9 +152,9 @@ bool test_copy_constructor() {
 }
 
 bool test_move_constructor() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     vector<Foo> v2(std::move(v1));
-    START()
     EXPECT(v1.empty())
     EXPECT(!v2.empty())
     EXPECT(v1.size()      == 0)
@@ -168,11 +170,11 @@ bool test_move_constructor() {
 }
 
 bool test_push_back() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     vector<Foo> v2;
     v1.push_back(42);
     v2.push_back(42);
-    START()
     EXPECT(!v1.empty())
     EXPECT(!v2.empty())
     EXPECT(v1.size()      == 6)
@@ -185,9 +187,9 @@ bool test_push_back() {
 }
 
 bool test_pop_back() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.pop_back();
-    START()
     EXPECT(v1.back()      == 4)
     EXPECT(v1.size()      == 4)
     EXPECT(v1.capacity()  == 5)
@@ -195,10 +197,10 @@ bool test_pop_back() {
 }
 
 bool test_insert_by_copy() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     Foo item = Foo(42);
     v1.insert(v1.cbegin() + 2, item);
-    START()
     EXPECT(v1.size()      == 6)
     EXPECT(v1.capacity()  == 10)
     EXPECT(v1[0]          == 1)
@@ -211,9 +213,9 @@ bool test_insert_by_copy() {
 }
 
 bool test_insert_by_move() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.insert(v1.cbegin() + 2,Foo(42));
-    START()
     EXPECT(v1.size()      == 6)
     EXPECT(v1.capacity()  == 10)
     EXPECT(v1[0]          == 1)
@@ -226,9 +228,9 @@ bool test_insert_by_move() {
 }
 
 bool test_insert_by_initializer_list() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.insert(v1.cbegin() + 2,{42, 42});
-    START()
     EXPECT(v1.size()      == 7)
     EXPECT(v1.capacity()  == 10)
     EXPECT(v1[0]          == 1)
@@ -242,10 +244,10 @@ bool test_insert_by_initializer_list() {
 }
 
 bool test_insert_by_iterator() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     vector<Foo> v2({42,42});
     v1.insert(v1.cbegin() + 2,v2.begin(), v2.end());
-    START()
     EXPECT(v1.size()      == 7)
     EXPECT(v1.capacity()  == 10)
     EXPECT(v1[0]          == 1)
@@ -259,9 +261,9 @@ bool test_insert_by_iterator() {
 }
 
 bool test_erase_single() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.erase(v1.cbegin() + 2);
-    START()
     EXPECT(v1.size()      == 4)
     EXPECT(v1.capacity()  == 5)
     EXPECT(v1[0]          == 1)
@@ -272,9 +274,9 @@ bool test_erase_single() {
 }
 
 bool test_erase_range() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.erase(v1.cbegin() + 2,v1.cbegin() + 4);
-    START()
     EXPECT(v1.size()      == 3)
     EXPECT(v1.capacity()  == 5)
     EXPECT(v1[0]          == 1)
@@ -284,9 +286,9 @@ bool test_erase_range() {
 }
 
 bool test_emplace_back() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.emplace_back(42);
-    START()
     EXPECT(v1.size()      == 6)
     EXPECT(v1.capacity()  == 10)
     EXPECT(v1[0]          == 1)
@@ -299,9 +301,9 @@ bool test_emplace_back() {
 }
 
 bool test_emplace() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     v1.emplace(v1.cbegin() + 2,42);
-    START()
     EXPECT(v1.size()      == 6)
     EXPECT(v1.capacity()  == 10)
     EXPECT(v1[0]          == 1)
@@ -314,9 +316,9 @@ bool test_emplace() {
 }
 
 bool test_iterator_read() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     auto it = v1.begin();
-    START()
     EXPECT(it[0] == 1)
     EXPECT(it[1] == 2)
     EXPECT(it[2] == 3)
@@ -336,9 +338,9 @@ bool test_iterator_read() {
 }
 
 bool test_c_iterator_read() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     auto it = v1.cbegin();
-    START()
     EXPECT(it[0] == 1)
     EXPECT(it[1] == 2)
     EXPECT(it[2] == 3)
@@ -358,9 +360,9 @@ bool test_c_iterator_read() {
 }
 
 bool test_r_iterator_read() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     auto it = v1.rbegin();
-    START()
     EXPECT(it[0] == 5)
     EXPECT(it[1] == 4)
     EXPECT(it[2] == 3)
@@ -380,9 +382,9 @@ bool test_r_iterator_read() {
 }
 
 bool test_cr_iterator_read() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     auto it = v1.crbegin();
-    START()
     EXPECT(it[0] == 5)
     EXPECT(it[1] == 4)
     EXPECT(it[2] == 3)
@@ -402,6 +404,7 @@ bool test_cr_iterator_read() {
 }
 
 bool test_iterator_write() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     auto it = v1.begin();
 
@@ -409,7 +412,6 @@ bool test_iterator_write() {
     it[1] = 42;
     it[3] = 42;
     it[4] = 42;
-    START()
     EXPECT(it[0] == 42)
     EXPECT(it[1] == 42)
     EXPECT(it[2] == 3)
@@ -419,6 +421,7 @@ bool test_iterator_write() {
 }
 
 bool test_r_iterator_write() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     auto itr = v1.rbegin();
     auto it = v1.begin();
@@ -429,7 +432,6 @@ bool test_r_iterator_write() {
     itr[3] = 43;
     itr[4] = 44;
 
-    START()
     EXPECT(it[0] == 44)
     EXPECT(it[1] == 43)
     EXPECT(it[2] == 42)
@@ -439,31 +441,26 @@ bool test_r_iterator_write() {
 }
 
 bool test_constructors_destructors_match() {
-    Foo::init();
-
-    {
-        vector<Foo> v;
-        for(int i = 0; i < 1000;++i) {
-            auto item = Foo(i);
-            v.insert(v.cbegin(),item);
-        }
-        for(int i = 0; i < 1000;++i) {
-            v.pop_back();
-        }
-    }
-
     START()
+//         vector<Foo> v;
+//         for(int i = 0; i < 1000;++i) {
+//             auto item = Foo(i);
+//             v.insert(v.cbegin(),item);
+//         }
+//         for(int i = 0; i < 1000;++i) {
+//             v.pop_back();
+//         }
     EXPECT(Foo::balance == 0)
     STOP()
 }
 
 bool test_shrink_resize_reserve() {
+    START()
     vector<Foo> v;
 
     v.reserve(10);
     v.insert(v.cbegin(), {1,2,3,4,5});
 
-    START()
     EXPECT(v.capacity() == 10)
     EXPECT(v.size()     == 5)
 
@@ -480,18 +477,19 @@ bool test_shrink_resize_reserve() {
 }
 
 bool test_doubling() {
+    START()
     vector<Foo> v;
 
     v.reserve(5);
     v.insert(v.cbegin(), {1,2,3,4,5,6,7});
 
-    START()
     EXPECT(v.capacity() == 10)
     EXPECT(v.size()     == 7)
     STOP()
 }
 
 bool test_swap() {
+    START()
     vector<Foo> v1({1, 2, 3, 4, 5});
     vector<Foo> v2({6, 7, 8 ,9});
     auto old_v1_size = v1.size();
@@ -501,7 +499,6 @@ bool test_swap() {
 
     v1.swap(v2);
 
-    START()
     EXPECT(v1.size()      == old_v2_size)
     EXPECT(v1.capacity()  == old_v2_capacity)
     EXPECT(v2.size()      == old_v1_size)
@@ -551,10 +548,10 @@ void init() {
     tests.push_back({"test_cr_iterator_read",                  test_cr_iterator_read});
     tests.push_back({"test_iterator_write",                    test_iterator_write});
     tests.push_back({"test_r_iterator_write",                  test_r_iterator_write});
-    tests.push_back({"test_constructors_destructors_match",    test_constructors_destructors_match});
     tests.push_back({"test_shrink_resize_reserve",             test_shrink_resize_reserve});
     tests.push_back({"test_doubling",                          test_doubling});
     tests.push_back({"test_swap",                              test_swap});
+    tests.push_back({"test_constructors_destructors_match",    test_constructors_destructors_match});
 }
 }
 
