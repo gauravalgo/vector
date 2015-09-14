@@ -31,6 +31,9 @@ public:
     typedef size_t size_type;
     typedef T value_type;
 
+    static_assert(std::is_copy_assignable<value_type>::value,"Should be copy assignable");
+    static_assert(std::is_copy_constructible<value_type>::value,"Should be copy constructible");
+
     class iterator
     {
     public:
@@ -313,6 +316,7 @@ public:
 private:
     value_type * allocate(size_type n);
     void force_reserve(size_type n);
+
 
 
 private:
