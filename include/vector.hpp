@@ -321,27 +321,27 @@ private:
 
 private:
     value_type * m_array {nullptr};
-    size_type m_max_number{0};
-    size_type m_current_number{0};
+    size_type m_capacity{0};
+    size_type m_size{0};
     void try_reserve();
 
 };
 
 template<typename value_type>
 vector<value_type>::vector(size_type n) :
-    m_max_number(n),m_current_number(m_max_number) {
-    m_array = allocate(m_max_number);
-    for(int i = 0; i< m_current_number; ++ i) {
+    m_capacity(n),m_size(m_capacity) {
+    m_array = allocate(m_capacity);
+    for(int i = 0; i< m_size; ++ i) {
         (void) new (m_array + i) value_type();
     }
 }
 
 template<typename value_type>
 vector<value_type>::vector(const vector<value_type> & other) {
-    m_max_number = other.size();
-    m_current_number = m_max_number;
-    m_array = allocate(m_max_number);
-    for(int i = 0; i< m_current_number; ++ i) {
+    m_capacity = other.size();
+    m_size = m_capacity;
+    m_array = allocate(m_capacity);
+    for(int i = 0; i< m_size; ++ i) {
         (void) new (m_array + i) value_type(other[i]);
     }
 }
@@ -349,11 +349,11 @@ vector<value_type>::vector(const vector<value_type> & other) {
 template<typename value_type>
 vector<value_type>::vector( vector<value_type> && other) {
      std::swap(m_array, other.m_array);
-     std::swap(m_current_number,other.m_current_number);
-     std::swap(m_max_number,other.m_max_number);
+     std::swap(m_size,other.m_size);
+     std::swap(m_capacity,other.m_capacity);
      other.m_array = nullptr;
-     other.m_current_number = 0;
-     other.m_max_number = 0;
+     other.m_size = 0;
+     other.m_capacity = 0;
 }
 template<typename value_type>
 template <class InputIterator>
@@ -369,7 +369,7 @@ vector<value_type>::vector (std::initializer_list<value_type> il) {
 template<typename value_type>
 vector<value_type>::~vector() {
     if(m_array) {
-        for(size_type i = 0; i< m_current_number; ++ i) {
+        for(size_type i = 0; i< m_size; ++ i) {
             m_array[i].~value_type();
         }
         free(m_array);
@@ -389,7 +389,7 @@ void vector<value_type>::push_back( value_type&& val) {
 
 template<typename value_type>
 void vector<value_type>::pop_back() {
-    if(!m_current_number) {
+    if(!m_size) {
         throw std::out_of_range("Position is out of range!");
     }
     erase(cend() - 1);
@@ -403,11 +403,12 @@ typename vector<value_type>::iterator vector<value_type>::insert (
     }
     auto pos = position - cbegin();
     try_reserve();
-    for(size_type i = m_current_number; i > pos;i--) {
+    (void) new (m_array + m_size) value_type(val);
+
+    for(size_type i = m_size; i > pos;i--) {
         std::swap(m_array[i],m_array[i - 1]);
     }
-    (void) new (m_array + pos) value_type(val);
-    m_current_number++;
+    ++m_size;
     return begin() + pos;
 }
 
@@ -419,11 +420,11 @@ typename vector<value_type>::iterator vector<value_type>::insert (
     }
     auto pos = position - cbegin();
     try_reserve();
-    for(size_type i = m_current_number; i > pos;i--) {
+    (void) new (m_array + m_size) value_type(std::forward<value_type>(val));
+    for(size_type i = m_size; i > pos;i--) {
         std::swap(m_array[i],m_array[i - 1]);
     }
-    (void) new (m_array + pos) value_type(std::forward<value_type>(val));
-    m_current_number++;
+    ++m_size;
     return begin() + pos;
 }
 
@@ -437,23 +438,28 @@ typename vector<value_type>::iterator vector<value_type>::insert (
         throw std::out_of_range("Position is out of range!");
     }
 
-    if(m_current_number + distance > m_max_number) {
-        auto reserve_up_to = std::max(m_current_number + distance, 2 * m_max_number);
+    if(m_size + distance > m_capacity) {
+        auto reserve_up_to = std::max(m_size + distance, 2 * m_capacity);
         reserve(reserve_up_to);
     }
+    //Initializing storage
+    for(size_type i = m_size; i< m_size + distance; ++i) {
+        (void) new (m_array + i) value_type();
+    }
 
-    for(size_type i = 0; i < m_current_number - from; ++i) {
-        auto dest = m_current_number + distance - i - 1;
-        auto src = m_current_number - i - 1;
+    //Performing shift
+    for(size_type i = 0; i < m_size - from; ++i) {
+        auto dest = m_size + distance - i - 1;
+        auto src = m_size - i - 1;
         std::swap(m_array[dest],m_array[src]);
     }
 
+    //Filling storage
     for(size_type i = 0; i < distance; ++i) {
-//         m_array[from+i].~value_type();
-        (void) new (m_array + from + i) value_type(*(il.begin() + i));
+        m_array[from + i] =  std::move(*(il.begin() + i));
     }
 
-    m_current_number += distance;
+    m_size += distance;
     return begin() + from;
 }
 
@@ -468,22 +474,29 @@ typename vector<value_type>::iterator vector<value_type>::insert (
         throw std::out_of_range("Position is out of range!");
     }
 
-    if(m_current_number + distance > m_max_number) {
-        auto reserve_up_to = std::max(m_current_number + distance, 2 * m_current_number);
+    if(m_size + distance > m_capacity) {
+        auto reserve_up_to = std::max(m_size + distance, 2 * m_size);
         reserve(reserve_up_to);
     }
 
-    for(size_type i = 0; i < m_current_number - from; ++i) {
-        auto dest = m_current_number + distance - i - 1;
-        auto src = m_current_number - i - 1;
+    //Initializing storage
+    for(size_type i = m_size; i< m_size + distance; ++i) {
+        (void) new (m_array + i) value_type();
+    }
+
+    //Performing shift
+    for(size_type i = 0; i < m_size - from; ++i) {
+        auto dest = m_size + distance - i - 1;
+        auto src = m_size - i - 1;
         std::swap(m_array[dest],m_array[src]);
     }
 
+    //Filling storage
     for(size_type i = 0; i < distance; ++i) {
-        (void) new (m_array + from + i) value_type(first[i]);
+        m_array[from + i] =  first[i];
     }
 
-    m_current_number += distance;
+    m_size += distance;
     return begin() + from;
 }
 
@@ -500,25 +513,25 @@ typename vector<value_type>::iterator vector<value_type>::erase (const_iterator 
         throw std::out_of_range("Position is out of range!");
     }
 
-    auto to = std::min(m_current_number, (size_type)(last - cbegin()));
+    auto to = std::min(m_size, (size_type)(last - cbegin()));
     auto true_distance = to - from;
 
-    for(size_type i = to; i < m_current_number; ++i) {
+    for(size_type i = to; i < m_size; ++i) {
         std::swap(m_array[i - true_distance],m_array[i]);
     }
 
-    for(size_type i = m_current_number - true_distance; i < m_current_number; ++i) {
+    for(size_type i = m_size - true_distance; i < m_size; ++i) {
         m_array[i].~value_type();
     }
 
-    m_current_number -= true_distance;
+    m_size -= true_distance;
 
     return begin() + from;
 }
 
 template<typename value_type>
 value_type & vector<value_type>::at(size_type n) {
-    if(n > m_current_number - 1){
+    if(n > m_size - 1){
         throw std::out_of_range("Position is out of range!");
     }
     return m_array[n];
@@ -526,7 +539,7 @@ value_type & vector<value_type>::at(size_type n) {
 
 template<typename value_type>
 const value_type & vector<value_type>::at(size_type n) const {
-    if(n > m_current_number - 1){
+    if(n > m_size - 1){
         throw std::out_of_range("Position is out of range!");
     }
     return m_array[n];
@@ -544,33 +557,33 @@ value_type * vector<value_type>::data() {
 
 template<typename value_type>
 void vector<value_type>::clear() {
-    for(size_type i = 0; i < m_current_number; ++i) {
+    for(size_type i = 0; i < m_size; ++i) {
         m_array[i].~value_type();
     }
-    m_current_number = 0;
+    m_size = 0;
 }
 
 template<typename value_type>
 void vector<value_type>::try_reserve() {
-    if(m_max_number == 0 && !m_array) {
-        m_max_number = 1;
-        m_array = allocate(m_max_number);
+    if(m_capacity == 0 && !m_array) {
+        m_capacity = 1;
+        m_array = allocate(m_capacity);
     }
 
-    if(m_current_number >= m_max_number) {
-        auto n = m_max_number * 2;
+    if(m_size >= m_capacity) {
+        auto n = m_capacity * 2;
         reserve(n);
     }
 }
 
 template<typename value_type>
 typename vector<value_type>::size_type vector<value_type>::size() const {
-    return m_current_number;
+    return m_size;
 }
 
 template<typename value_type>
 typename vector<value_type>::size_type vector<value_type>::capacity() const {
-    return m_max_number;
+    return m_capacity;
 }
 template<typename value_type>
 bool vector<value_type>::empty() const noexcept {
@@ -585,16 +598,16 @@ void vector<value_type>::resize(size_type n) {
         for(size_type i = n; i < size(); ++i) {
            m_array[i].~value_type();
         }
-        m_current_number = n;
+        m_size = n;
     } else {
-        if(n > m_max_number) {
+        if(n > m_capacity) {
             reserve(n);
         } else {
             for(size_type i = size(); i <  n; ++i) {
                 (void) new (m_array+i) value_type();
             }
         }
-        m_current_number = n;
+        m_size = n;
     }
 }
 
@@ -608,20 +621,20 @@ void vector<value_type>::reserve(size_type n) {
         if (n > max_size()) {
         throw std::length_error("max_size() exceeded!");
     }
-    if(m_max_number == 0 && !m_array) {
-        m_max_number = 1;
-        m_array = allocate(m_max_number);
+    if(m_capacity == 0 && !m_array) {
+        m_capacity = 1;
+        m_array = allocate(m_capacity);
     }
-    if (n > m_max_number) {
+    if (n > m_capacity) {
         value_type * tmp  = allocate(n);
         if (m_array) {
-            for(size_type i = 0; i < std::min(m_current_number, n); ++i) {
+            for(size_type i = 0; i < std::min(m_size, n); ++i) {
                 std::swap(tmp[i], m_array[i]);
             }
             free(m_array);
         }
         m_array = tmp;
-        m_max_number = n;
+        m_capacity = n;
     }
 }
 template<typename value_type>
@@ -631,13 +644,13 @@ void vector<value_type>::force_reserve(size_type n) {
     }
     value_type * tmp  = allocate(n);
     if (m_array) {
-        for(size_type i = 0; i < std::min(m_current_number, n); ++i) {
+        for(size_type i = 0; i < std::min(m_size, n); ++i) {
             std::swap(tmp[i], m_array[i]);
         }
         free(m_array);
     }
     m_array = tmp;
-    m_max_number = n;
+    m_capacity = n;
 }
 
 template<typename value_type>
@@ -660,14 +673,14 @@ vector<value_type> & vector<value_type>::operator=(const vector< value_type >& o
     if(other != *this) {
         bool need_realloc = false;
         size_type old_size(size());
-        if(m_max_number < other.size()) {
+        if(m_capacity < other.size()) {
             need_realloc = true;
-            m_max_number = other.size();
+            m_capacity = other.size();
         }
-        value_type * destination = (need_realloc || !m_array) ? allocate(m_max_number) : m_array;
-        m_current_number = other.size();
+        value_type * destination = (need_realloc || !m_array) ? allocate(m_capacity) : m_array;
+        m_size = other.size();
 
-       for(int i = 0; i< m_current_number; ++ i) {
+       for(int i = 0; i< m_size; ++ i) {
            (void) new (destination + i) value_type(other[i]);
        }
 
@@ -687,11 +700,11 @@ vector<value_type> & vector<value_type>::operator=(const vector< value_type >& o
 template<typename value_type>
 vector<value_type>& vector<value_type>::operator=(vector<value_type> && other) {
      std::swap(m_array, other.m_array);
-     std::swap(m_current_number,other.m_currentNumber);
-     std::swap(m_max_number,other.m_maxNumber);
+     std::swap(m_size,other.m_currentNumber);
+     std::swap(m_capacity,other.m_maxNumber);
      other.m_array = nullptr;
      other.m_current_number = 0;
-     other.m_max_number = 0;
+     other.m_capacity = 0;
 }
 
 
@@ -700,7 +713,7 @@ bool vector<value_type>::operator==(const vector<value_type> & other) const {
     if (size() != other.size()) {
         return false;
     }
-    for(size_type i = 0; i < m_current_number;++i) {
+    for(size_type i = 0; i < m_size;++i) {
         if(m_array[i]!=other[i]) {
             return false;
         }
@@ -720,7 +733,7 @@ value_type& vector<value_type>::front() {
 
 template<typename value_type>
 value_type& vector<value_type>::back() {
-    return m_array[m_current_number - 1];
+    return m_array[m_size - 1];
 }
 
 template<typename value_type>
@@ -730,7 +743,7 @@ const value_type& vector<value_type>::front() const  {
 
 template<typename value_type>
 const value_type & vector<value_type>::back() const {
-    return m_array[m_current_number - 1];
+    return m_array[m_size - 1];
 }
 
 template<typename value_type>
@@ -747,7 +760,7 @@ typename vector<value_type>::iterator vector<value_type>::begin()
 template<typename value_type>
 typename vector<value_type>::iterator vector<value_type>::end()
 {
-    return iterator(m_array) + m_current_number;
+    return iterator(m_array) + m_size;
 }
 
 template<typename value_type>
@@ -758,7 +771,7 @@ typename vector<value_type>::const_iterator vector<value_type>::cbegin()
 
 template<typename value_type>
 typename vector<value_type>::const_iterator vector<value_type>::cend() {
-    return const_iterator(m_array) + m_current_number;
+    return const_iterator(m_array) + m_size;
 }
 
 template<typename value_type>
@@ -787,11 +800,12 @@ typename vector<value_type>::iterator vector<value_type>::emplace (
     Args&&... args) {
     auto pos = position - cbegin();
     try_reserve();
-    for(auto i = m_current_number; i > pos; --i) {
-        std::swap(m_array[i],m_array[i-1]);
+    (void)new (m_array + m_size) value_type(args ...);
+    for(auto i = m_size; i > pos; --i) {
+        std::swap(m_array[i],m_array[i - 1]);
     }
-    m_current_number++;
-    return iterator(new (m_array + pos) value_type(args ...));
+    m_size++;
+    return iterator(m_array);
 }
 
 template<typename value_type>
@@ -803,8 +817,8 @@ void vector<value_type>::emplace_back (Args&&... args) {
 template<typename value_type>
 void vector<value_type>::swap (vector<value_type> & other) {
      std::swap(m_array, other.m_array);
-     std::swap(m_current_number,other.m_current_number);
-     std::swap(m_max_number,other.m_max_number);
+     std::swap(m_size,other.m_size);
+     std::swap(m_capacity,other.m_capacity);
 }
 
 #endif
